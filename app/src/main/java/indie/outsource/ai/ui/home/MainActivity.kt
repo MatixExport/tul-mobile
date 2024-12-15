@@ -4,9 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,22 +34,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import dagger.hilt.android.AndroidEntryPoint
 import indie.outsource.ai.model.Message
 import indie.outsource.ai.ui.theme.PurpleGrey80
 import indie.outsource.ai.ui.theme.TestAppTheme
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val viewModel: HomeViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             TestAppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ConstraintLayoutContent(modifier = Modifier
+                    ConstraintLayoutContent(
+                            viewModel ,
+                            modifier = Modifier
                           .padding(innerPadding)
                           .padding(16.dp,32.dp))
                 }
@@ -56,30 +69,18 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ConstraintLayoutContent(modifier: Modifier) {
+fun ConstraintLayoutContent(
+    viewModel: HomeViewModel,
+    modifier: Modifier
+) {
+    val homeUiState by viewModel.uiState.collectAsState()
+
     ConstraintLayout {
         val (msgList, textInput) = createRefs()
         val bottomGuideline = createGuidelineFromBottom(0.4f)
 
         MessageList(
-                listOf<Message>(
-                    Message("Start",false),
-                    Message("Test2",true),
-                    Message("Test3",false),
-                    Message("Test1",false),
-                    Message("Test2",true),
-                    Message("Test3",false),
-                    Message("Test1",false),
-                    Message("Test2",true),
-                    Message("Test3",false),
-                    Message("Test1",false),
-                    Message("Test2",true),
-                    Message("Test3",false),
-                    Message("Test3",false),
-                    Message("Test1",false),
-                    Message("Test2",true),
-                    Message("Koniec",false)
-                ),
+                homeUiState.messages,
             modifier = Modifier
                 .then(modifier)
                 .constrainAs(msgList) {
@@ -91,6 +92,7 @@ fun ConstraintLayoutContent(modifier: Modifier) {
         )
 
         TextInput(
+            onClick = {text:String -> viewModel.addUserMessage(text)},
             Modifier
                 .then(modifier)
                 .constrainAs(textInput) {
@@ -103,7 +105,7 @@ fun ConstraintLayoutContent(modifier: Modifier) {
 
 
 @Composable
-fun TextInput(modifier: Modifier = Modifier) {
+fun TextInput(onClick: (text:String) -> Unit,modifier: Modifier = Modifier) {
     var text by remember { mutableStateOf(TextFieldValue("")) }
 
     Box(
@@ -136,7 +138,8 @@ fun TextInput(modifier: Modifier = Modifier) {
             )
             IconButton(
                 onClick = {
-                    // TODO: Send the message
+                    onClick(text.text)
+                    text = TextFieldValue()
                 }
             ) {
                 Icon(
@@ -188,10 +191,45 @@ fun MessageBox(msg: Message, modifier: Modifier = Modifier){
                 .padding(16.dp),
 
         ) {
-            Text(text = msg.text)
+            if(msg.text.contains("```")){
+                Column{
+                    val splitStrings = msg.text.split("```")
+                    splitStrings.forEachIndexed { index, result ->
+                        if(index % 2 == 0){
+                            Text(text = result)
+                        }
+                        else{
+                            CodeSnippet(result)
+                        }
+                    }
+                }
+            }
+            else{
+                Text(text = msg.text)
+            }
+
+
         }
     }
 
+}
+
+@Composable
+fun CodeSnippet(
+    text: String
+) {
+    Text(
+        text = text,
+        style = TextStyle(
+            fontFamily = FontFamily.Monospace,
+            fontSize = 16.sp,
+            color = Color.White,
+            fontWeight = FontWeight.Normal
+        ),
+        modifier = Modifier
+            .background(Color(0xFF2E3440))
+            .padding(12.dp)
+    )
 }
 
 

@@ -1,5 +1,7 @@
 package indie.outsource.ai.ui.home
 
-//data class HomeState (
-////    val
-//)
+import indie.outsource.ai.model.Message
+
+data class HomeState (
+    val messages : List<Message> = listOf()
+)
