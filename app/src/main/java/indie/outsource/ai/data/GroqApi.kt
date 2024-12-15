@@ -1,9 +1,8 @@
 package indie.outsource.ai.data
 
-import indie.outsource.ai.model.GroqModel
 import indie.outsource.ai.model.request.GroqRequest
 import indie.outsource.ai.model.response.GroqCompletionResponse
-import indie.outsource.ai.model.response.GroqTextResponse
+import indie.outsource.ai.model.response.GroqModelListResponse
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -13,10 +12,10 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface GroqApi {
-    @GET("/models")
+    @GET("models")
     suspend fun getModels(
         @Header("Authorization") token: String
-    ) : Response<List<GroqModel>>
+    ) : Response<GroqModelListResponse>
 
     @POST("chat/completions")
     suspend fun getCompletion(

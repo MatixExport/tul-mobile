@@ -1,4 +1,4 @@
-package indie.outsource.ai.ui.home
+package indie.outsource.ai.ui.views.inference
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,18 +13,19 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class InferenceViewModel @Inject constructor(
     private val repository: ModelRepository
 ) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(HomeState())
-    val uiState: StateFlow<HomeState> = _uiState.asStateFlow()
+    //This is really messy
+    var modelId : String = ""
+    private val _uiState = MutableStateFlow(InferenceState())
+    val uiState: StateFlow<InferenceState> = _uiState.asStateFlow()
 
 
     private fun completeText(text : String){
         CoroutineScope(Dispatchers.Default).launch {
             try{
-                val response : String = repository.getCompletion(text)
+                val response : String = repository.getCompletion(text,modelId)
                 println(response);
                 addMessage(
                     Message(response,false)
@@ -37,7 +38,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun addMessage(item: Message) {
-        _uiState.value = HomeState(messages = uiState.value.messages + item)
+        _uiState.value = InferenceState(messages = uiState.value.messages + item)
     }
 
     fun addUserMessage(text : String) {
@@ -46,6 +47,7 @@ class HomeViewModel @Inject constructor(
         )
         completeText(text)
     }
+
 }
 
 

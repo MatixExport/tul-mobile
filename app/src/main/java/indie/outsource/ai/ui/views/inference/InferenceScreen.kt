@@ -1,18 +1,14 @@
-package indie.outsource.ai.ui.home
+package indie.outsource.ai.ui.views.inference
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,7 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -39,65 +34,60 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import dagger.hilt.android.AndroidEntryPoint
+import androidx.constraintlayout.compose.Dimension
+import androidx.hilt.navigation.compose.hiltViewModel
 import indie.outsource.ai.model.Message
 import indie.outsource.ai.ui.theme.PurpleGrey80
-import indie.outsource.ai.ui.theme.TestAppTheme
+import kotlin.time.measureTime
 
-@AndroidEntryPoint
-class MainActivity : ComponentActivity() {
-    private val viewModel: HomeViewModel by viewModels()
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            TestAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ConstraintLayoutContent(
-                            viewModel ,
-                            modifier = Modifier
-                          .padding(innerPadding)
-                          .padding(16.dp,32.dp))
-                }
-            }
-        }
-    }
+
+@Composable
+fun InferenceScreen(modifier: Modifier,viewModel: InferenceViewModel = hiltViewModel(),modelId:String){
+    //This is messy
+    viewModel.modelId = modelId
+    ConstraintLayoutContent(
+        viewModel,
+        modifier = Modifier
+            .then(modifier)
+            .padding(16.dp, 32.dp)
+    )
 }
 
 @Composable
 fun ConstraintLayoutContent(
-    viewModel: HomeViewModel,
+    viewModel: InferenceViewModel,
     modifier: Modifier
 ) {
     val homeUiState by viewModel.uiState.collectAsState()
 
     ConstraintLayout {
         val (msgList, textInput) = createRefs()
-        val bottomGuideline = createGuidelineFromBottom(0.4f)
+        val bottomGuideline = createGuidelineFromBottom(0.3f)
+        val topGuideline = createGuidelineFromTop(150.dp)
 
         MessageList(
-                homeUiState.messages,
+            homeUiState.messages,
             modifier = Modifier
                 .then(modifier)
                 .constrainAs(msgList) {
-                top.linkTo(parent.top, margin = 64.dp)
-                bottom.linkTo(textInput.top, margin = 32.dp)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }
+                    top.linkTo(topGuideline)
+                    bottom.linkTo(textInput.top, margin = 32.dp)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+//                    height = Dimension.fillToConstraints
+                }
         )
 
         TextInput(
-            onClick = {text:String -> viewModel.addUserMessage(text)},
+            onClick = { text: String -> viewModel.addUserMessage(text) },
             Modifier
                 .then(modifier)
                 .constrainAs(textInput) {
-                bottom.linkTo(parent.bottom)
-            }
+                    bottom.linkTo(parent.bottom)
+                }
         )
     }
 }
@@ -111,9 +101,9 @@ fun TextInput(onClick: (text:String) -> Unit,modifier: Modifier = Modifier) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(4.dp)
             .then(modifier),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.BottomCenter
     ) {
         Row(
             modifier = Modifier
@@ -190,7 +180,7 @@ fun MessageBox(msg: Message, modifier: Modifier = Modifier){
                 .background(PurpleGrey80)
                 .padding(16.dp),
 
-        ) {
+            ) {
             if(msg.text.contains("```")){
                 Column{
                     val splitStrings = msg.text.split("```")
@@ -230,13 +220,4 @@ fun CodeSnippet(
             .background(Color(0xFF2E3440))
             .padding(12.dp)
     )
-}
-
-
-@Preview(showBackground = true, name = "wasd")
-@Composable
-fun GreetingPreview() {
-    TestAppTheme {
-
-    }
 }
