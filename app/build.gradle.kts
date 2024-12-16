@@ -12,7 +12,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.myapplication"
+        applicationId = "indie.outsource.ai"
         minSdk = 27
         targetSdk = 35
         versionCode = 1
