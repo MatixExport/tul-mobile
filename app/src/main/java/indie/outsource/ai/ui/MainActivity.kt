@@ -24,6 +24,7 @@ import indie.outsource.ai.ui.views.home.HomeScreen
 import indie.outsource.ai.ui.views.inference.InferenceScreen
 import indie.outsource.ai.ui.views.inference.InferenceViewModel
 import indie.outsource.ai.ui.views.modelList.ModelList
+import indie.outsource.ai.ui.views.modelList.ModelListScreen
 
 
 @AndroidEntryPoint
@@ -65,7 +66,7 @@ fun NavComposable(modifier: Modifier = Modifier){
                 HomeScreen(modifier)
             }
             composable(route = Routes.ModelList.name){
-                ModelList(
+                ModelListScreen(
                     modifier,
                     onItemClick = {
                         id ->

@@ -209,11 +209,12 @@ fun CodeSnippet(
         style = TextStyle(
             fontFamily = FontFamily.Monospace,
             fontSize = 16.sp,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onPrimary,
             fontWeight = FontWeight.Normal
         ),
         modifier = Modifier
-            .background(Color(0xFF2E3440))
+            .background(MaterialTheme.colorScheme.primary)
             .padding(12.dp)
+            .clip(RoundedCornerShape(12.dp))
     )
 }
