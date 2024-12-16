@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    id("com.google.gms.google-services")
 
 }
 
@@ -43,9 +44,19 @@ android {
 }
 
 dependencies {
+    implementation(libs.coil.kt.coil.compose)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.play.services.auth)
+    implementation(platform(libs.firebase.bom))
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.hilt.android)
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.googleid)
     kapt(libs.hilt.android.compiler)
     implementation(libs.retrofit2.retrofit)
     implementation(libs.converter.gson)

@@ -24,24 +24,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.myapplication.R
+import com.google.firebase.auth.FirebaseUser
 import indie.outsource.ai.model.Conversation
 
 @Composable
-fun HomeScreen(modifier: Modifier){
-    Text(modifier = modifier,text="Witajicie")
-    HomeScreenItems()
+fun HomeScreen(modifier: Modifier = Modifier,user:FirebaseUser?){
+    HomeScreenItems(user=user)
 }
 
 @Composable
 fun HomeScreenItems(
     modifier: Modifier = Modifier,
     onCardClicked: (String) -> Unit = {},
+    user:FirebaseUser?
 ) {
 
     LazyColumn(
@@ -53,9 +57,7 @@ fun HomeScreenItems(
 
 
         item {
-
-            UserHomeSection()
-
+            UserHomeSection(user = user)
         }
         item{
             WelcomeText()
@@ -73,18 +75,32 @@ fun HomeScreenItems(
 }
 
 @Composable
-fun UserHomeSection(modifier: Modifier = Modifier){
+fun UserHomeSection(modifier: Modifier = Modifier,user:FirebaseUser?){
     val image = painterResource(R.drawable.blank_profile_picture)
     Row(
 
     ){
-        Image(
-            painter = image,
-            contentDescription = "profile picture",
-            modifier = Modifier
-                .size(60.dp)
-                .clip(RoundedCornerShape(30.dp))
-        )
+        if(user != null){
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(user.photoUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(30.dp))
+            )
+        }
+        else{
+            Image(
+                painter = image,
+                contentDescription = "profile picture",
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(30.dp))
+            )
+        }
         Column(
             modifier = Modifier
                 .padding(8.dp,8.dp,0.dp,0.dp)
@@ -94,7 +110,7 @@ fun UserHomeSection(modifier: Modifier = Modifier){
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Random User"
+                text = user?.displayName?.toString() ?: "Random User"
             )
         }
     }
