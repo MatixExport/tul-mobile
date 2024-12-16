@@ -1,14 +1,13 @@
 package indie.outsource.ai.ui.views.inference
 
+import android.content.res.Resources.Theme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,11 +36,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import indie.outsource.ai.model.Message
 import indie.outsource.ai.ui.theme.PurpleGrey80
-import kotlin.time.measureTime
 
 
 @Composable
@@ -177,7 +174,7 @@ fun MessageBox(msg: Message, modifier: Modifier = Modifier){
                         bottomEnd = if (msg.isUserMessage) 0f else 48f
                     )
                 )
-                .background(PurpleGrey80)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                 .padding(16.dp),
 
             ) {
@@ -186,7 +183,7 @@ fun MessageBox(msg: Message, modifier: Modifier = Modifier){
                     val splitStrings = msg.text.split("```")
                     splitStrings.forEachIndexed { index, result ->
                         if(index % 2 == 0){
-                            Text(text = result)
+                            Text(text = result,color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                         else{
                             CodeSnippet(result)
@@ -195,7 +192,7 @@ fun MessageBox(msg: Message, modifier: Modifier = Modifier){
                 }
             }
             else{
-                Text(text = msg.text)
+                Text(text = msg.text, color = MaterialTheme.colorScheme.onSecondaryContainer)
             }
 
 
