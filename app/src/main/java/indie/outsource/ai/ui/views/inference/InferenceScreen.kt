@@ -132,7 +132,6 @@ fun TextInput(onClick: (text:String) -> Unit,modifier: Modifier = Modifier) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = "Send"
-
                 )
             }
         }

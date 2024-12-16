@@ -14,8 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +39,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
+import indie.outsource.ai.model.Conversation
 
 @Composable
 fun HomeScreen(modifier: Modifier){
@@ -66,18 +73,13 @@ fun HomeScreenItems(
             BrowseModelsBox()
         }
 
-
         item{
-
-
-
+            RecentConversations()
         }
-
 
     }
 
 }
-
 
 @Composable
 fun UserHomeSection(modifier: Modifier = Modifier){
@@ -162,8 +164,87 @@ fun BrowseModelsBox(){
 }
 
 @Composable
-fun RecentConversations(){
+fun RecentConversations(modifier: Modifier = Modifier){
+    val conversationList = listOf(
+        Conversation(
+            "My conversation1",
+            listOf(),
+            "lambda-8192-b"
+        ),
+        Conversation(
+            "Example Conv",
+            listOf(),
+            "lambda-8192-b"
+        ),
+        Conversation(
+            "New conv",
+            listOf(),
+            "lambda-8192-b"
+        ),
+        Conversation(
+            "Lambada v1.2",
+            listOf(),
+            "lambda-8192-b"
+        )
+    )
+    Column(
+        modifier = Modifier
+            .padding(0.dp,32.dp,0.dp,0.dp)
+            .then(modifier)
+    ) {
+        Text(
+            text = "Recent Conversations",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier
+                .padding(0.dp,0.dp,0.dp,16.dp)
+                .then(modifier)
+        )
+        conversationList.forEach{conversation: Conversation ->
+            ConversationRow(conversation)
+        }
 
+    }
+}
+
+@Composable
+fun ConversationRow(conversation: Conversation, onClick: () -> Unit = {}){
+    Row(
+        modifier = Modifier
+            .padding(0.dp,0.dp,0.dp,12.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp)),
+
+    ){
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+        ) {
+            Text(
+                text = conversation.title,
+            )
+            Text(
+                text = conversation.modelId,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        Column(
+            modifier = Modifier
+                .padding(12.dp),
+            horizontalAlignment = Alignment.End
+
+        ) {
+            IconButton(
+                onClick = onClick,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                    contentDescription = "Load Conversation"
+                )
+            }
+        }
+    }
 }
 
 
