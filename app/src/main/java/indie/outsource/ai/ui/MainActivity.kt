@@ -17,12 +17,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.AndroidEntryPoint
+import indie.outsource.ai.data.AuthRepository
+import indie.outsource.ai.data.AuthRepositoryImpl
 import indie.outsource.ai.ui.navigation.Navbar
 import indie.outsource.ai.ui.navigation.Routes
 import indie.outsource.ai.ui.theme.TestAppTheme
@@ -30,11 +34,14 @@ import indie.outsource.ai.ui.views.auth.SignInScreen
 import indie.outsource.ai.ui.views.home.HomeScreen
 import indie.outsource.ai.ui.views.inference.InferenceScreen
 import indie.outsource.ai.ui.views.modelList.ModelListScreen
-
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -46,60 +53,82 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+fun useCredentialManager(authRepository: AuthRepository,onSignInComplete:(user:FirebaseUser) -> Unit){
+    CoroutineScope(Dispatchers.Default).launch {
+        try{
+            val user : FirebaseUser = authRepository.signIn()
+            onSignInComplete(user)
+        }
+        catch (e : Exception){
+            println(e.message)
+        }
+    }
+}
+
 @Composable
 fun NavComposable(modifier: Modifier = Modifier){
-    val navController : NavHostController = rememberNavController()
-    var user by remember { mutableStateOf<FirebaseUser?>(null) }
+    val viewModel : MainViewModel = hiltViewModel()
+    val authRepo : AuthRepository = AuthRepositoryImpl(LocalContext.current)
 
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        bottomBar = {
-            Navbar(
-                onClick = {dest : String ->
-                    navController.navigate(dest)
+    if(viewModel.user == null) {
+        useCredentialManager(authRepo) { user2: FirebaseUser? ->
+                if (user2 != null) {
+                    viewModel.user = user2
                 }
-            )
+
         }
-    ) { innerPadding ->
-        NavHost(
-            modifier = Modifier.padding(innerPadding),
-            navController = navController,
-            startDestination = Routes.SignIn.name,
-        ){
-            composable(route = Routes.Home.name){
-                HomeScreen(modifier,user)
-            }
-            composable(route = Routes.ModelList.name){
-                ModelListScreen(
-                    modifier,
-                    onItemClick = {
-                        id ->
-                        navController.navigate("${Routes.Inference.name}/$id")
+    }
+
+        val navController: NavHostController = rememberNavController()
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            bottomBar = {
+                Navbar(
+                    onClick = { dest: String ->
+                        navController.navigate(dest)
                     }
                 )
             }
-            composable("${Routes.Inference.name}/{modelId}"){backStackEntry ->
-                InferenceScreen(
-                    modifier=modifier,
-                    modelId = backStackEntry.arguments?.getString("modelId")!!
-                )
-            }
-            composable(Routes.SignIn.name){
-                SignInScreen(
-                    modifier = modifier,
-                    onSignInComplete = {loadedUser:FirebaseUser->
-                    navController.navigate(Routes.Home.name)
-                        println(loadedUser.displayName)
-//                    user = loadedUser
-
+        ) { innerPadding ->
+            NavHost(
+                modifier = Modifier.padding(innerPadding),
+                navController = navController,
+                startDestination = Routes.Home.name,
+            ) {
+                composable(route = Routes.Home.name) {
+                    HomeScreen(modifier,mainViewModel=viewModel)
                 }
-                )
+                composable(route = Routes.ModelList.name) {
+                    ModelListScreen(
+                        modifier,
+                        onItemClick = { id ->
+                            navController.navigate("${Routes.Inference.name}/$id")
+                        }
+                    )
+                }
+                composable("${Routes.Inference.name}/{modelId}") { backStackEntry ->
+                    InferenceScreen(
+                        modifier = modifier,
+                        modelId = backStackEntry.arguments?.getString("modelId")!!
+                    )
+                }
+//            composable(Routes.SignIn.name){
+//                SignInScreen(
+//                    modifier = modifier,
+//                    onSignInComplete = {loadedUser:FirebaseUser->
+//                    navController.navigate(Routes.Home.name)
+//                        println(loadedUser.displayName)
+////                    user = loadedUser
+//
+//                }
+//                )
             }
         }
     }
 
 
 
-}
+

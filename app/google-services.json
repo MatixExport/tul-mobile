@@ -15,11 +15,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "435938895956-kl5i1uj41ltuise11cp3msigmhgsr4c9.apps.googleusercontent.com",
+          "client_id": "435938895956-8dmi6i3jagj5evf95has5k59lilah22v.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "indie.outsource.ai",
-            "certificate_hash": "57596cc898bc3b2fb165a5d3f32282c54a821169"
+            "certificate_hash": "b0d7fbeca24280bdc95a46feff9760ffd3a1ed35"
           }
         },
         {

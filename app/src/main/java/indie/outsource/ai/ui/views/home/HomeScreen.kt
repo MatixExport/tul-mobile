@@ -19,6 +19,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,15 +32,17 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.myapplication.R
 import com.google.firebase.auth.FirebaseUser
 import indie.outsource.ai.model.Conversation
+import indie.outsource.ai.ui.MainViewModel
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier,user:FirebaseUser?){
-    HomeScreenItems(user=user)
+fun HomeScreen(modifier: Modifier = Modifier,mainViewModel: MainViewModel){
+    HomeScreenItems(user=mainViewModel.user)
 }
 
 @Composable
