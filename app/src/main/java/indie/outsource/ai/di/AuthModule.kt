@@ -14,8 +14,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.internal.Contexts.getApplication
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import indie.outsource.ai.data.AuthRepository
-import indie.outsource.ai.data.AuthRepositoryImpl
 import javax.inject.Named
 import javax.inject.Singleton
 

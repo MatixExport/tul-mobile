@@ -25,8 +25,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.AndroidEntryPoint
-import indie.outsource.ai.data.AuthRepository
-import indie.outsource.ai.data.AuthRepositoryImpl
 import indie.outsource.ai.ui.navigation.Navbar
 import indie.outsource.ai.ui.navigation.Routes
 import indie.outsource.ai.ui.theme.TestAppTheme
@@ -53,33 +51,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
-fun useCredentialManager(authRepository: AuthRepository,onSignInComplete:(user:FirebaseUser) -> Unit){
-    CoroutineScope(Dispatchers.Default).launch {
-        try{
-            val user : FirebaseUser = authRepository.signIn()
-            onSignInComplete(user)
-        }
-        catch (e : Exception){
-            println(e.message)
-        }
-    }
-}
-
 @Composable
 fun NavComposable(modifier: Modifier = Modifier){
     val viewModel : MainViewModel = hiltViewModel()
-    val authRepo : AuthRepository = AuthRepositoryImpl(LocalContext.current)
-
-    if(viewModel.user == null) {
-        useCredentialManager(authRepo) { user2: FirebaseUser? ->
-                if (user2 != null) {
-                    viewModel.user = user2
-                }
-
-        }
-    }
-
         val navController: NavHostController = rememberNavController()
         Scaffold(
             modifier = Modifier
@@ -96,10 +70,10 @@ fun NavComposable(modifier: Modifier = Modifier){
             NavHost(
                 modifier = Modifier.padding(innerPadding),
                 navController = navController,
-                startDestination = Routes.Home.name,
+                startDestination = Routes.SignIn.name,
             ) {
                 composable(route = Routes.Home.name) {
-                    HomeScreen(modifier,mainViewModel=viewModel)
+                    HomeScreen(modifier, mainViewModel = viewModel)
                 }
                 composable(route = Routes.ModelList.name) {
                     ModelListScreen(
@@ -115,19 +89,23 @@ fun NavComposable(modifier: Modifier = Modifier){
                         modelId = backStackEntry.arguments?.getString("modelId")!!
                     )
                 }
-//            composable(Routes.SignIn.name){
-//                SignInScreen(
-//                    modifier = modifier,
-//                    onSignInComplete = {loadedUser:FirebaseUser->
-//                    navController.navigate(Routes.Home.name)
-//                        println(loadedUser.displayName)
-////                    user = loadedUser
-//
-//                }
-//                )
+                composable(route = Routes.SignIn.name) {
+                    SignInScreen(
+                        modifier = modifier,
+                        navigate = {
+
+                            navController.navigate(Routes.Home.name)
+                        },
+                        onSignInComplete = { loadedUser: FirebaseUser ->
+                            navController.navigate(Routes.Home.name)
+                            viewModel.user = loadedUser
+
+                        }
+                    )
+                }
             }
         }
-    }
+}
 
 
 
