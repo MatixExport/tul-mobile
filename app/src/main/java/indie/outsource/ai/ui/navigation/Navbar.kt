@@ -14,15 +14,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 
 val items = listOf(Routes.Home.name,Routes.ModelList.name)
 val selectedIcons = listOf(Icons.Filled.Home, Icons.AutoMirrored.Filled.List)
 val unselectedIcons =listOf(Icons.Outlined.Home, Icons.AutoMirrored.Outlined.List)
 
+
+
 @Composable
-fun Navbar(onClick: (text:String) -> Unit) {
+fun Navbar(navController: NavHostController, onClick: (text:String) -> Unit) {
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = currentBackStackEntry?.destination
+    val hideBottomBar = currentDestination?.route in listOf(Routes.SignIn.name,Routes.SignUp.name)
     var selectedItem by remember { mutableIntStateOf(0) }
+
+    if(hideBottomBar){
+        return
+    }
 
     NavigationBar {
         items.forEachIndexed { index, item ->
@@ -43,23 +54,3 @@ fun Navbar(onClick: (text:String) -> Unit) {
         }
     }
 }
-
-//@Composable
-//fun TopBarWithBackButton(
-//    title: String,
-//    navController: NavHostController,
-//    modifier: Modifier = Modifier
-//) {
-//    TopAppBar(
-//        title = { Text(text = "") },
-//        navigationIcon = {
-//            IconButton(onClick = { navController.navigateUp() }) {
-//                Icon(
-//                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-//                    contentDescription = "Back"
-//                )
-//            }
-//        },
-//        modifier = modifier
-//    )
-//}

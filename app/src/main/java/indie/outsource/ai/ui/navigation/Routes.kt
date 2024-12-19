@@ -4,5 +4,6 @@ enum class Routes() {
     Home,
     ModelList,
     Inference,
-    SignIn
+    SignIn,
+    SignUp
 }

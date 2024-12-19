@@ -1,23 +1,16 @@
 package indie.outsource.ai.ui
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -28,13 +21,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import indie.outsource.ai.ui.navigation.Navbar
 import indie.outsource.ai.ui.navigation.Routes
 import indie.outsource.ai.ui.theme.TestAppTheme
-import indie.outsource.ai.ui.views.auth.SignInScreen
+import indie.outsource.ai.ui.views.auth.signIn.SignInScreen
+import indie.outsource.ai.ui.views.auth.singUp.SignUpScreen
 import indie.outsource.ai.ui.views.home.HomeScreen
 import indie.outsource.ai.ui.views.inference.InferenceScreen
 import indie.outsource.ai.ui.views.modelList.ModelListScreen
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
@@ -55,16 +46,22 @@ class MainActivity : ComponentActivity() {
 fun NavComposable(modifier: Modifier = Modifier){
     val viewModel : MainViewModel = hiltViewModel()
         val navController: NavHostController = rememberNavController()
+
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
             bottomBar = {
-                Navbar(
-                    onClick = { dest: String ->
-                        navController.navigate(dest)
-                    }
-                )
+                println("MainActivity:BottonBar")
+                if((navController.currentDestination?.route != Routes.SignIn.name)&&
+                    (navController.currentDestination?.route != Routes.SignUp.name)) {
+                    Navbar(
+                        navController = navController,
+                        onClick = { dest: String ->
+                            navController.navigate(dest)
+                        }
+                    )
+                }
             }
         ) { innerPadding ->
             NavHost(
@@ -92,14 +89,24 @@ fun NavComposable(modifier: Modifier = Modifier){
                 composable(route = Routes.SignIn.name) {
                     SignInScreen(
                         modifier = modifier,
-                        navigate = {
-
-                            navController.navigate(Routes.Home.name)
+                        onSignUpClick = {
+                            navController.navigate(Routes.SignUp.name)
                         },
                         onSignInComplete = { loadedUser: FirebaseUser ->
                             navController.navigate(Routes.Home.name)
                             viewModel.user = loadedUser
 
+                        }
+                    )
+                }
+                composable(route = Routes.SignUp.name){
+                    SignUpScreen(
+                        onSignInClick = {
+                            navController.navigate(Routes.SignIn.name)
+                        },
+                        onSignUpComplete = {loadedUser: FirebaseUser ->
+                            navController.navigate(Routes.Home.name)
+                            viewModel.user = loadedUser
                         }
                     )
                 }

@@ -16,7 +16,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
-suspend fun signIn(context:Context): FirebaseUser {
+suspend fun credentialManagerSignIn(context:Context): FirebaseUser {
     val credentialManager = CredentialManager.create(context)
     val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
         .setFilterByAuthorizedAccounts(false)
@@ -81,3 +81,5 @@ private suspend fun handleSignIn(result: GetCredentialResponse): FirebaseUser? {
     }
     throw RuntimeException()
 }
+
+

@@ -5,6 +5,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.api.Context
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -27,9 +28,8 @@ class AuthModule {
 //            AuthRepository = AuthRepositoryImpl()
 
 
-
-
-
-
+    @Singleton
+    @Provides
+    fun provideFirebaseAuth():FirebaseAuth = Firebase.auth
 
 }

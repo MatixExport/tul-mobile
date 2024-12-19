@@ -114,7 +114,7 @@ fun UserHomeSection(modifier: Modifier = Modifier,user:FirebaseUser?){
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = user?.displayName?.toString() ?: "Random User"
+                text = user?.displayName?.toString() ?: user?.email.toString()
             )
         }
     }
