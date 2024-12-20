@@ -17,6 +17,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseUser
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.AndroidEntryPoint
 import indie.outsource.ai.ui.navigation.Navbar
 import indie.outsource.ai.ui.navigation.Routes
@@ -75,15 +77,17 @@ fun NavComposable(modifier: Modifier = Modifier){
                 composable(route = Routes.ModelList.name) {
                     ModelListScreen(
                         modifier,
-                        onItemClick = { id ->
+                        onQuery = { id ->
                             navController.navigate("${Routes.Inference.name}/$id")
                         }
                     )
                 }
                 composable("${Routes.Inference.name}/{modelId}") { backStackEntry ->
+                    val listType = object : TypeToken<List<String>>() {}.type
                     InferenceScreen(
                         modifier = modifier,
-                        modelId = backStackEntry.arguments?.getString("modelId")!!
+                        modelId = backStackEntry.arguments?.getString("modelId")!!,
+                        models = Gson().fromJson(backStackEntry.arguments?.getString("modelId").toString(),listType)
                     )
                 }
                 composable(route = Routes.SignIn.name) {

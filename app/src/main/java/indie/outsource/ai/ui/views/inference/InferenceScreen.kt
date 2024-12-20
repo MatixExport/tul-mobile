@@ -1,6 +1,5 @@
 package indie.outsource.ai.ui.views.inference
 
-import android.content.res.Resources.Theme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,9 +9,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -38,25 +38,36 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import indie.outsource.ai.model.Message
-import indie.outsource.ai.ui.theme.PurpleGrey80
+import kotlin.math.max
+import kotlin.math.min
 
 
 @Composable
-fun InferenceScreen(modifier: Modifier,viewModel: InferenceViewModel = hiltViewModel(),modelId:String){
+fun InferenceScreen(modifier: Modifier,viewModel: InferenceViewModel = hiltViewModel(),modelId:String,models:List<String>){
     //This is messy
     viewModel.modelId = modelId
+    viewModel.models = models
+
     ConstraintLayoutContent(
         viewModel,
         modifier = Modifier
             .then(modifier)
-            .padding(16.dp, 32.dp)
+            .padding(16.dp, 32.dp),
+        onGoToPreviousModel = {index:Int,msg:Message ->
+            viewModel.setMessageResponse(index, max(msg.currentResponseIndex-1,0))
+        },
+        onGoToNextModel = {index:Int,msg:Message ->
+            viewModel.setMessageResponse(index,min((msg.currentResponseIndex+1),msg.responses.size-1))
+        }
     )
 }
 
 @Composable
 fun ConstraintLayoutContent(
     viewModel: InferenceViewModel,
-    modifier: Modifier
+    modifier: Modifier,
+    onGoToPreviousModel : (index:Int,msg:Message)->Unit,
+    onGoToNextModel : (index:Int,msg:Message)->Unit
 ) {
     val homeUiState by viewModel.uiState.collectAsState()
 
@@ -67,6 +78,8 @@ fun ConstraintLayoutContent(
 
         MessageList(
             homeUiState.messages,
+            onGoToPreviousModel = onGoToPreviousModel,
+            onGoToNextModel = onGoToNextModel,
             modifier = Modifier
                 .then(modifier)
                 .constrainAs(msgList) {
@@ -75,7 +88,8 @@ fun ConstraintLayoutContent(
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
 //                    height = Dimension.fillToConstraints
-                }
+                },
+
         )
 
         TextInput(
@@ -142,7 +156,11 @@ fun TextInput(onClick: (text:String) -> Unit,modifier: Modifier = Modifier) {
 
 
 @Composable
-fun MessageList(messages: List<Message>, modifier: Modifier = Modifier) {
+fun MessageList(messages: List<Message>,
+            modifier: Modifier = Modifier,
+            onGoToPreviousModel : (index:Int,msg:Message)->Unit,
+            onGoToNextModel : (index:Int,msg:Message)->Unit) {
+
     LazyColumn(
         modifier = Modifier
             .fillMaxHeight()
@@ -150,14 +168,25 @@ fun MessageList(messages: List<Message>, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(10.dp)
 
     ) {
-        items(messages, itemContent = {msg ->
-            MessageBox(msg)
+        itemsIndexed(messages, itemContent = {index,msg ->
+            MessageBox(
+                msg,
+                index=index,
+                onGoToPreviousModel = onGoToPreviousModel,
+                onGoToNextModel = onGoToNextModel
+            )
         })
     }
 }
 
 @Composable
-fun MessageBox(msg: Message, modifier: Modifier = Modifier){
+fun MessageBox(msg: Message,
+               index:Int,
+               modifier: Modifier = Modifier,
+               onGoToPreviousModel : (index:Int,msg:Message)->Unit,
+               onGoToNextModel : (index:Int,msg:Message)->Unit
+
+){
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement =  if (msg.isUserMessage) Arrangement.End else Arrangement.Start
@@ -177,27 +206,66 @@ fun MessageBox(msg: Message, modifier: Modifier = Modifier){
                 .padding(16.dp),
 
             ) {
-            if(msg.text.contains("```")){
-                Column{
-                    val splitStrings = msg.text.split("```")
-                    splitStrings.forEachIndexed { index, result ->
-                        if(index % 2 == 0){
-                            Text(text = result,color = MaterialTheme.colorScheme.onSecondaryContainer)
+            if(!msg.isUserMessage){
+                val groqMsg = msg.responses[msg.currentResponseIndex]
+                Column(){
+                    Row(
+                        Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ){
+                        IconButton(
+                            enabled = msg.currentResponseIndex > 0,
+                            onClick = {
+                                onGoToPreviousModel(index,msg)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = "Go back to previous model"
+                            )
                         }
-                        else{
-                            CodeSnippet(result)
+                        Text(groqMsg.modelId)
+                        IconButton(
+                            enabled = msg.currentResponseIndex < (msg.responses.size-1),
+                            onClick = {
+                                onGoToNextModel(index,msg)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "Go to next model"
+                            )
                         }
                     }
+                    MessageContent(groqMsg.text)
                 }
+            }else{
+                MessageContent(msg.text)
             }
-            else{
-                Text(text = msg.text, color = MaterialTheme.colorScheme.onSecondaryContainer)
-            }
-
-
         }
     }
 
+}
+
+@Composable
+fun MessageContent(text:String){
+    if(text.contains("```")){
+        Column{
+            val splitStrings = text.split("```")
+            splitStrings.forEachIndexed { index, result ->
+                if(index % 2 == 0){
+                    Text(text = result,color = MaterialTheme.colorScheme.onSecondaryContainer)
+                }
+                else{
+                    CodeSnippet(result)
+                }
+            }
+        }
+    }
+    else{
+        Text(text = text, color = MaterialTheme.colorScheme.onSecondaryContainer)
+    }
 }
 
 @Composable

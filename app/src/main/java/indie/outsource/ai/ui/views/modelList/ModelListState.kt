@@ -5,5 +5,5 @@ import indie.outsource.ai.model.response.GroqModel
 
 data class ModelListState (
     val isLoading : Boolean = true,
-    val models : List<Model> = listOf()
+    val models : List<ModelListModel> = listOf()
 )
