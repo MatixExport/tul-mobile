@@ -20,11 +20,13 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.AndroidEntryPoint
+import indie.outsource.ai.model.Conversation
 import indie.outsource.ai.ui.navigation.Navbar
 import indie.outsource.ai.ui.navigation.Routes
 import indie.outsource.ai.ui.theme.TestAppTheme
 import indie.outsource.ai.ui.views.auth.signIn.SignInScreen
 import indie.outsource.ai.ui.views.auth.singUp.SignUpScreen
+import indie.outsource.ai.ui.views.conversationList.ConversationListScreen
 import indie.outsource.ai.ui.views.home.HomeScreen
 import indie.outsource.ai.ui.views.inference.InferenceScreen
 import indie.outsource.ai.ui.views.modelList.ModelListScreen
@@ -44,6 +46,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+
 @Composable
 fun NavComposable(modifier: Modifier = Modifier){
     val viewModel : MainViewModel = hiltViewModel()
@@ -54,16 +58,12 @@ fun NavComposable(modifier: Modifier = Modifier){
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
             bottomBar = {
-                println("MainActivity:BottonBar")
-                if((navController.currentDestination?.route != Routes.SignIn.name)&&
-                    (navController.currentDestination?.route != Routes.SignUp.name)) {
-                    Navbar(
-                        navController = navController,
-                        onClick = { dest: String ->
-                            navController.navigate(dest)
-                        }
-                    )
-                }
+                Navbar(
+                    navController = navController,
+                    onClick = { dest: String ->
+                        navController.navigate(dest)
+                    }
+                )
             }
         ) { innerPadding ->
             NavHost(
@@ -72,7 +72,12 @@ fun NavComposable(modifier: Modifier = Modifier){
                 startDestination = Routes.SignIn.name,
             ) {
                 composable(route = Routes.Home.name) {
-                    HomeScreen(modifier, mainViewModel = viewModel)
+                    HomeScreen(modifier,
+                        mainViewModel = viewModel,
+                        onConversationClick = {conv:Conversation->
+                            navController.navigate("${Routes.Inference.name}/load/${conv.documentId}")
+                        }
+                    )
                 }
                 composable(route = Routes.ModelList.name) {
                     ModelListScreen(
@@ -86,7 +91,6 @@ fun NavComposable(modifier: Modifier = Modifier){
                     val listType = object : TypeToken<List<String>>() {}.type
                     InferenceScreen(
                         modifier = modifier,
-                        modelId = backStackEntry.arguments?.getString("modelId")!!,
                         models = Gson().fromJson(backStackEntry.arguments?.getString("modelId").toString(),listType)
                     )
                 }
@@ -112,6 +116,19 @@ fun NavComposable(modifier: Modifier = Modifier){
                             navController.navigate(Routes.Home.name)
                             viewModel.user = loadedUser
                         }
+                    )
+                }
+                composable(route = Routes.ConversationList.name){
+                    ConversationListScreen(
+                        onConversationClick = {conv:Conversation->
+                            navController.navigate("${Routes.Inference.name}/load/${conv.documentId}")
+                        }
+                    )
+                }
+                composable(route = "${Routes.Inference.name}/load/{conversationUuid}"){backStackEntry ->
+                    InferenceScreen(
+                        modifier = modifier,
+                        conversationUuid = backStackEntry.arguments?.getString("conversationUuid").toString()
                     )
                 }
             }

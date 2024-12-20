@@ -39,16 +39,20 @@ import com.example.myapplication.R
 import com.google.firebase.auth.FirebaseUser
 import indie.outsource.ai.model.Conversation
 import indie.outsource.ai.ui.MainViewModel
+import indie.outsource.ai.ui.views.conversationList.ConversationRow
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier,mainViewModel: MainViewModel){
-    HomeScreenItems(user=mainViewModel.user)
+fun HomeScreen(modifier: Modifier = Modifier,mainViewModel: MainViewModel,onConversationClick:(Conversation)->Unit = {}){
+    HomeScreenItems(
+        user=mainViewModel.user,
+        onConversationClick = onConversationClick
+    )
 }
 
 @Composable
 fun HomeScreenItems(
     modifier: Modifier = Modifier,
-    onCardClicked: (String) -> Unit = {},
+    onConversationClick:(Conversation)->Unit = {},
     user:FirebaseUser?
 ) {
 
@@ -71,7 +75,7 @@ fun HomeScreenItems(
         }
 
         item{
-            RecentConversations()
+            RecentConversations(onConversationClick = onConversationClick)
         }
 
     }
@@ -175,29 +179,10 @@ fun BrowseModelsBox(){
 }
 
 @Composable
-fun RecentConversations(modifier: Modifier = Modifier){
-    val conversationList = listOf(
-        Conversation(
-            "My conversation1",
-            listOf(),
-            "lambda-8192-b"
-        ),
-        Conversation(
-            "Example Conv",
-            listOf(),
-            "lambda-8192-b"
-        ),
-        Conversation(
-            "New conv",
-            listOf(),
-            "lambda-8192-b"
-        ),
-        Conversation(
-            "Lambada v1.2",
-            listOf(),
-            "lambda-8192-b"
-        )
-    )
+fun RecentConversations(modifier: Modifier = Modifier,viewModel: HomeViewModel = hiltViewModel(),onConversationClick:(Conversation)->Unit = {}){
+
+    val homeUiState by viewModel.uiState.collectAsState()
+
     Column(
         modifier = Modifier
             .padding(0.dp,32.dp,0.dp,0.dp)
@@ -210,53 +195,14 @@ fun RecentConversations(modifier: Modifier = Modifier){
                 .padding(0.dp,0.dp,0.dp,16.dp)
                 .then(modifier)
         )
-        conversationList.forEach{conversation: Conversation ->
-            ConversationRow(conversation)
+        homeUiState.conversationsList.forEach{conversation: Conversation ->
+            ConversationRow(conversation,onClick=onConversationClick)
         }
 
     }
 }
 
-@Composable
-fun ConversationRow(conversation: Conversation, onClick: () -> Unit = {}){
-    Row(
-        modifier = Modifier
-            .padding(0.dp,0.dp,0.dp,12.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp)),
 
-    ){
-        Column(
-            modifier = Modifier
-                .padding(12.dp)
-        ) {
-            Text(
-                text = conversation.title,
-            )
-            Text(
-                text = conversation.modelId,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        Column(
-            modifier = Modifier
-                .padding(12.dp),
-            horizontalAlignment = Alignment.End
-
-        ) {
-            IconButton(
-                onClick = onClick,
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                    contentDescription = "Load Conversation"
-                )
-            }
-        }
-    }
-}
 
 
 

@@ -5,5 +5,6 @@ enum class Routes() {
     ModelList,
     Inference,
     SignIn,
-    SignUp
+    SignUp,
+    ConversationList
 }

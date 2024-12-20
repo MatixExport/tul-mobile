@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -15,10 +17,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.rounded.Create
+import androidx.compose.material3.Card
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,21 +38,33 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import indie.outsource.ai.model.Message
+import indie.outsource.ai.ui.views.auth.signIn.FormField
 import kotlin.math.max
 import kotlin.math.min
 
 
 @Composable
-fun InferenceScreen(modifier: Modifier,viewModel: InferenceViewModel = hiltViewModel(),modelId:String,models:List<String>){
+fun InferenceScreen(modifier: Modifier,
+                    viewModel: InferenceViewModel = hiltViewModel(),
+                    models:List<String> = listOf(),
+                    conversationUuid:String = ""
+
+){
     //This is messy
-    viewModel.modelId = modelId
     viewModel.models = models
+
+    if(conversationUuid.isNotEmpty()){
+        viewModel.loadConversation(conversationUuid)
+    }
 
     ConstraintLayoutContent(
         viewModel,
@@ -72,7 +90,7 @@ fun ConstraintLayoutContent(
     val homeUiState by viewModel.uiState.collectAsState()
 
     ConstraintLayout {
-        val (msgList, textInput) = createRefs()
+        val (msgList, textInput,saveButton) = createRefs()
         val bottomGuideline = createGuidelineFromBottom(0.3f)
         val topGuideline = createGuidelineFromTop(150.dp)
 
@@ -92,6 +110,18 @@ fun ConstraintLayoutContent(
 
         )
 
+        FloatingActionButton(
+            onClick = {viewModel.showDialog()},
+            modifier = Modifier
+                .padding(0.dp,16.dp,8.dp,0.dp)
+                .constrainAs(saveButton){
+                    top.linkTo(parent.top)
+                    end.linkTo(parent.end)
+                }
+        ) {
+            Icon(Icons.Rounded.Create, "Save conversation")
+        }
+
         TextInput(
             onClick = { text: String -> viewModel.addUserMessage(text) },
             Modifier
@@ -100,6 +130,16 @@ fun ConstraintLayoutContent(
                     bottom.linkTo(parent.bottom)
                 }
         )
+
+        if(homeUiState.isDialogOpen){
+            SaveConversationDialog(
+                value = homeUiState.conversationTitle,
+                onChange = {viewModel.setTitle(it)},
+                onConfirmRequest = {viewModel.onConfirmSave()}
+            ) {
+                viewModel.hideDialog()
+            }
+        }
     }
 }
 
@@ -285,4 +325,60 @@ fun CodeSnippet(
             .padding(12.dp)
             .clip(RoundedCornerShape(12.dp))
     )
+}
+
+@Composable
+fun SaveConversationDialog(value:TextFieldValue = TextFieldValue(),
+                           onChange:(text:TextFieldValue)->Unit = {},
+                           onConfirmRequest: () ->Unit = {},
+                           onDismissRequest:()->Unit) {
+    Dialog(onDismissRequest = { onDismissRequest() }) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp)
+                .padding(20.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "Save conversation",
+                    modifier = Modifier
+                        .padding(4.dp),
+                    textAlign = TextAlign.Center,
+                )
+                FormField(
+                    label = "Name",
+                    placeholder = "Conversation name",
+                    keyboardType = KeyboardType.Text,
+                    value = value
+
+                ) {
+                    onChange(it)
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    TextButton(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.padding(8.dp),
+                    ) {
+                        Text("Dismiss")
+                    }
+                    TextButton(
+                        onClick = onConfirmRequest,
+                        modifier = Modifier.padding(8.dp),
+                    ) {
+                        Text("Confirm")
+                    }
+                }
+            }
+        }
+    }
 }
