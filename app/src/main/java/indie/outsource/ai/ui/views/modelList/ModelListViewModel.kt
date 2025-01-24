@@ -1,14 +1,19 @@
 package indie.outsource.ai.ui.views.modelList
 
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import indie.outsource.ai.data.AccountDataRepository
 import indie.outsource.ai.data.ModelRepository
+import indie.outsource.ai.model.AccountData
 import indie.outsource.ai.model.Model
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.internal.toImmutableList
@@ -16,11 +21,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ModelListViewModel @Inject constructor(
-    private val repository: ModelRepository
+    private val repository: ModelRepository,
+    private val accountRepository: AccountDataRepository
 ) : ViewModel() {
-
+    private var accountData : AccountData? = null
     private val _uiState = MutableStateFlow(ModelListState())
     val uiState: StateFlow<ModelListState> = _uiState.asStateFlow()
+
 
 
     private fun getAllModels(){
@@ -37,6 +44,30 @@ class ModelListViewModel @Inject constructor(
                 println(e.message)
             }
         }
+        CoroutineScope(Dispatchers.Default).launch {
+            try{
+                accountData = accountRepository.loadAccountData()
+                _uiState
+                    .asStateFlow()
+                    .filter { !it.isLoading }
+                    .first()
+                System.out.println("UWAGA: sie skończyło loadingować")
+                _uiState.update { previousState ->
+                    previousState.copy(
+                       models = previousState.models.map { modelListModel: ModelListModel ->
+                           modelListModel.copy(
+                               wasUsed = modelListModel.model.name in accountData!!.usedModels
+                           )
+                       }
+                    )
+                }
+            }
+            catch (e : Exception){
+                println(e.message)
+            }
+        }
+
+
     }
 
     fun onModelClick(index:Int){
@@ -63,6 +94,18 @@ class ModelListViewModel @Inject constructor(
             model.isSelected
         }
         return selectedModels.map { it.model.name }
+    }
+
+    fun handleOnQuery() {
+        CoroutineScope(Dispatchers.Default).launch {
+            accountData?.let {
+                accountRepository.updateAccountData(
+                    it.copy(
+                        usedModels = it.usedModels.union(getSelectedModelsIds()).toList()
+                    )
+                )
+            }
+        }
     }
 
     init {

@@ -22,7 +22,7 @@ suspend fun credentialManagerSignIn(context:Context): FirebaseUser {
         .setFilterByAuthorizedAccounts(false)
         //move to resources
         .setServerClientId("435938895956-l9avckf0mdr88u0u642jn9646r569gu3.apps.googleusercontent.com")
-        .setAutoSelectEnabled(false)
+        .setAutoSelectEnabled(true)
         .setNonce("halohalohalohalohalo")
         .build()
 

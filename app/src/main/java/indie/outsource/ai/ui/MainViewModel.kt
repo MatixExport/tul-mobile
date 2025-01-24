@@ -8,7 +8,4 @@ import com.google.firebase.auth.FirebaseUser
 
 class MainViewModel : ViewModel() {
     var user: FirebaseUser? by mutableStateOf(null)
-
-
-
 }

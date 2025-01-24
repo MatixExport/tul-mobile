@@ -113,10 +113,10 @@ fun ConstraintLayoutContent(
         FloatingActionButton(
             onClick = {viewModel.showDialog()},
             modifier = Modifier
-                .padding(0.dp,16.dp,8.dp,0.dp)
+                .padding(8.dp,16.dp,0.dp,0.dp)
                 .constrainAs(saveButton){
                     top.linkTo(parent.top)
-                    end.linkTo(parent.end)
+                    start.linkTo(parent.start)
                 }
         ) {
             Icon(Icons.Rounded.Create, "Save conversation")
@@ -142,7 +142,6 @@ fun ConstraintLayoutContent(
         }
     }
 }
-
 
 
 @Composable

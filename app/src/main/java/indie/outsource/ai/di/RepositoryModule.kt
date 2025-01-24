@@ -8,6 +8,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import indie.outsource.ai.data.AccountDataRepository
+import indie.outsource.ai.data.AccountDataRepositoryImpl
 import indie.outsource.ai.data.ConversationRepository
 import indie.outsource.ai.data.ConversationRepositoryImpl
 import indie.outsource.ai.data.GroqApi
@@ -46,6 +48,13 @@ class RepositoryModule {
         db: FirebaseFirestore,
         auth:FirebaseAuth
     ): ConversationRepository = ConversationRepositoryImpl(db,auth)
+
+    @Singleton
+    @Provides
+    fun provideAccountDataRepository(
+        db: FirebaseFirestore,
+        auth:FirebaseAuth
+    ): AccountDataRepository = AccountDataRepositoryImpl(db,auth)
 
 
 }
