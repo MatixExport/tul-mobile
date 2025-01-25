@@ -16,9 +16,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +44,10 @@ import com.google.gson.Gson
 
 data class ListItem(val name: String, val owner: String)
 
+fun isLikedByUser(item:ModelListModel,userId:String) : Boolean{
+    return userId in item.modelData.likedBy
+}
+
 @Composable
 fun ModelListScreen(modifier: Modifier,viewModel: ModelListViewModel = hiltViewModel(),onQuery: (id:String) -> Unit = {}){
 
@@ -60,7 +68,8 @@ fun ModelListScreen(modifier: Modifier,viewModel: ModelListViewModel = hiltViewM
                 models = modelListUiState.models,
                 onItemClick = { _:String, index:Int ->
                     viewModel.onModelClick(index)
-                }
+                },
+                onLike = {_:String,index:Int->viewModel.onLikeClick(index)}
             )
         }
 
@@ -72,10 +81,10 @@ fun ModelListScreen(modifier: Modifier,viewModel: ModelListViewModel = hiltViewM
                         bottom.linkTo(parent.bottom)
                     },
                 onClick = {
+                    viewModel.handleOnQuery()
                     onQuery(
                         Gson().toJson(viewModel.getSelectedModelsIds())
                     )
-                    viewModel.handleOnQuery()
                 }
             )
         }
@@ -113,10 +122,11 @@ fun SwitchWithTextToggle() {
 
 
 @Composable
-fun ModelList(modifier: Modifier,models:List<ModelListModel>,onItemClick: (id:String,index:Int) -> Unit = { s: String, i: Int -> }){
+fun ModelList(modifier: Modifier,models:List<ModelListModel>,onItemClick: (id:String,index:Int) -> Unit = { s: String, i: Int -> },onLike: (id: String, index: Int) -> Unit){
     ItemList(
         models,
-        onItemClick = onItemClick
+        onItemClick = onItemClick,
+        onLike = onLike
     )
 }
 
@@ -138,7 +148,7 @@ fun QueryButton(modifier: Modifier = Modifier,onClick:()->Unit){
 }
 
 @Composable
-fun ItemList(items: List<ModelListModel>,onItemClick: (id:String,index:Int) -> Unit = { s: String, i: Int -> }) {
+fun ItemList(items: List<ModelListModel>,onItemClick: (id:String,index:Int) -> Unit = { s: String, i: Int -> },onLike: (id: String, index: Int) -> Unit) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -149,53 +159,27 @@ fun ItemList(items: List<ModelListModel>,onItemClick: (id:String,index:Int) -> U
             ListItemView(
                 index = index,
                 item = items[index],
-                onClick = onItemClick
+                onClick = onItemClick,
+                onLike = onLike
             )
         }
     }
 }
 
-//@Composable
-//fun ListItemView(item: ModelListModel,index:Int,onClick: (id:String,index:Int) -> Unit = { s: String, i: Int -> }) {
-//    Column(
-//        modifier = Modifier
-//
-//            .fillMaxWidth()
-//            .padding(12.dp)
-//            .background(MaterialTheme.colorScheme.surfaceContainer)
-//            .border(
-//                width = if (item.isSelected) 2.dp else 0.dp,
-//                color = if (item.isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
-//                shape = MaterialTheme.shapes.medium
-//            )
-//
-//            .clip(shape = MaterialTheme.shapes.medium)
-//            .clickable { onClick(item.model.name,index) }
-//            .padding(16.dp),
-//    ) {
-//        Text(
-//            text = item.model.name,
-//            fontSize = 18.sp,
-//            fontWeight = FontWeight.Bold,
-//            color = MaterialTheme.colorScheme.primary
-//        )
-//        Spacer(modifier = Modifier.height(4.dp))
-//        Text(
-//            text = item.model.owner,
-//            fontSize = 14.sp,
-//            fontWeight = FontWeight.Normal,
-//            color = MaterialTheme.colorScheme.onSurface
-//        )
-//    }
-//}
+
 
 @Composable
 fun ListItemView(
     item: ModelListModel,
     index: Int,
     onClick: (id: String, index: Int) -> Unit = { _, _ -> },
-    onRatingChange: (Int) -> Unit = {} // Callback for rating change
+    onLike: (id: String, index: Int) -> Unit = { _, _ -> },
+    viewModel: ModelListViewModel = hiltViewModel()
 ) {
+
+    val modelListUiState by viewModel.uiState.collectAsState()
+
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -210,7 +194,6 @@ fun ListItemView(
             .clickable { onClick(item.model.name, index) }
             .padding(16.dp)
     ) {
-        // Item name and owner
         Text(
             text = item.model.name,
             fontSize = 18.sp,
@@ -224,28 +207,8 @@ fun ListItemView(
             fontWeight = FontWeight.Normal,
             color = MaterialTheme.colorScheme.onSurface
         )
-
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Rating input
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Rating:",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            StarRating(
-                rating = item.rating,
-                onRatingChange = onRatingChange
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Indicator for whether the user has used this item
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -262,24 +225,27 @@ fun ListItemView(
                 color = if (item.wasUsed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
             )
         }
-    }
-}
 
-@Composable
-fun StarRating(
-    rating: Int,
-    onRatingChange: (Int) -> Unit
-) {
-    Row {
-        for (i:Int in 1..5) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val isLiked = isLikedByUser(item,modelListUiState.accountData.userId)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable { onLike(item.model.name, index) }
+        ) {
             Icon(
-                imageVector = if (i <= rating) Icons.Default.Star else Icons.Outlined.Star,
-                contentDescription = "Star $i",
-                tint = if (i <= rating) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .size(24.dp)
-                    .clickable { onRatingChange(i) }
+                imageVector = if (isLiked) Icons.Default.ThumbUp else Icons.Outlined.ThumbUp,
+                contentDescription = if (isLiked) "Liked" else "Not Liked",
+                tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "${item.modelData.likedBy.size} Likes",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
 }
+

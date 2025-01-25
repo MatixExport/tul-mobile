@@ -15,6 +15,8 @@ import indie.outsource.ai.data.ConversationRepositoryImpl
 import indie.outsource.ai.data.GroqApi
 import indie.outsource.ai.data.GroqApiHelper
 import indie.outsource.ai.data.GroqRepository
+import indie.outsource.ai.data.ModelDataRepository
+import indie.outsource.ai.data.ModelDataRepositoryImpl
 import indie.outsource.ai.data.ModelRepository
 import javax.inject.Singleton
 
@@ -55,6 +57,14 @@ class RepositoryModule {
         db: FirebaseFirestore,
         auth:FirebaseAuth
     ): AccountDataRepository = AccountDataRepositoryImpl(db,auth)
+
+
+    @Singleton
+    @Provides
+    fun provideModelDataRepository(
+        db: FirebaseFirestore,
+        auth:FirebaseAuth
+    ): ModelDataRepository = ModelDataRepositoryImpl(db,auth)
 
 
 }

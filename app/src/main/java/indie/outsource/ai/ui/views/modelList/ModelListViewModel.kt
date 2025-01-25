@@ -1,9 +1,10 @@
 package indie.outsource.ai.ui.views.modelList
 
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import indie.outsource.ai.data.AccountDataRepository
+import indie.outsource.ai.data.ModelDataRepository
 import indie.outsource.ai.data.ModelRepository
 import indie.outsource.ai.model.AccountData
 import indie.outsource.ai.model.Model
@@ -22,7 +23,9 @@ import javax.inject.Inject
 @HiltViewModel
 class ModelListViewModel @Inject constructor(
     private val repository: ModelRepository,
-    private val accountRepository: AccountDataRepository
+    private val accountRepository: AccountDataRepository,
+    private val modelDataRepository: ModelDataRepository,
+    private val externalScope: CoroutineScope
 ) : ViewModel() {
     private var accountData : AccountData? = null
     private val _uiState = MutableStateFlow(ModelListState())
@@ -31,10 +34,10 @@ class ModelListViewModel @Inject constructor(
 
 
     private fun getAllModels(){
-        CoroutineScope(Dispatchers.Default).launch {
+        viewModelScope.launch {
             try{
                 _uiState.value = ModelListState(
-                    models = repository.getAllModels().map { model: Model ->
+                    models = repository.getAllModels().sortedBy { it.name }.map { model: Model ->
                         ModelListModel(model)
                     },
                     isLoading = false
@@ -44,21 +47,22 @@ class ModelListViewModel @Inject constructor(
                 println(e.message)
             }
         }
-        CoroutineScope(Dispatchers.Default).launch {
+        viewModelScope.launch {
             try{
                 accountData = accountRepository.loadAccountData()
                 _uiState
                     .asStateFlow()
                     .filter { !it.isLoading }
                     .first()
-                System.out.println("UWAGA: sie skończyło loadingować")
                 _uiState.update { previousState ->
                     previousState.copy(
                        models = previousState.models.map { modelListModel: ModelListModel ->
                            modelListModel.copy(
                                wasUsed = modelListModel.model.name in accountData!!.usedModels
                            )
-                       }
+                       },
+                        accountData = accountData!!,
+                        isLoading = false
                     )
                 }
             }
@@ -66,8 +70,33 @@ class ModelListViewModel @Inject constructor(
                 println(e.message)
             }
         }
-
-
+        viewModelScope.launch {
+            try{
+                val modelData = modelDataRepository.loadModelsData();
+                _uiState
+                    .asStateFlow()
+                    .filter { !it.isLoading }
+                    .first()
+                _uiState.update { previousState ->
+                    previousState.copy(
+                        models = previousState.models.map { modelListModel: ModelListModel ->
+                            val foundModelData = modelData.find { it.modelId == modelListModel.model.name }
+                            if (foundModelData != null) {
+                                modelListModel.copy(
+                                    modelData = foundModelData
+                                )
+                            } else {
+                                modelListModel
+                            }
+                        },
+                        isLoading = false
+                    )
+                }
+            }
+            catch (e : Exception){
+                println(e.message)
+            }
+        }
     }
 
     fun onModelClick(index:Int){
@@ -77,6 +106,39 @@ class ModelListViewModel @Inject constructor(
             previousState.copy(
                 models = listOfModels.toImmutableList()
             )
+        }
+    }
+
+    fun onLikeClick(index:Int){
+        _uiState.update { previousState ->
+            val listOfModels = previousState.models.toMutableList()
+            if(accountData == null){
+                return;
+            }
+            var newLikedBy: List<String>? = null
+            if(accountData!!.userId in listOfModels[index].modelData.likedBy){
+                newLikedBy = listOfModels[index].modelData.likedBy.filter{it != accountData!!.userId}
+
+            }
+            else{
+                newLikedBy = listOfModels[index].modelData.likedBy + accountData!!.userId
+            }
+            listOfModels[index] = listOfModels[index].copy(
+                modelData = listOfModels[index].modelData.copy(
+                    likedBy = newLikedBy
+                )
+            )
+            listOfModels[index] = listOfModels[index].copy(isSelected = !listOfModels[index].isSelected)
+            previousState.copy(
+                models = listOfModels.toImmutableList()
+            )
+
+        }
+        viewModelScope.launch {
+           modelDataRepository.toggleLikeModel(
+               uiState.value.models[index].modelData.documentId,
+               uiState.value.models[index].model.name
+           )
         }
     }
 
@@ -97,7 +159,7 @@ class ModelListViewModel @Inject constructor(
     }
 
     fun handleOnQuery() {
-        CoroutineScope(Dispatchers.Default).launch {
+        externalScope.launch {
             accountData?.let {
                 accountRepository.updateAccountData(
                     it.copy(
@@ -107,10 +169,8 @@ class ModelListViewModel @Inject constructor(
             }
         }
     }
-
     init {
         getAllModels()
     }
-
 
 }

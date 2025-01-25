@@ -35,20 +35,18 @@ class AccountDataRepositoryImpl @Inject constructor(
             newAccountData.documentId = postResult.id
             return newAccountData
         }
-        println("Loaded from account")
-        println(getResult.toString())
         return getResult.toObjects(AccountData::class.java).first()
 
     }
 
     override suspend fun updateAccountData(data: AccountData): Boolean {
+        println(data.documentId)
         val result = db.collection(collectionName)
             .document(data.documentId)
             .set(data)
-        if(result.isSuccessful){
-            return true
-        }else{
-            throw RuntimeException(result.exception?.message.toString())
-        }
+            .await()
+
+        return true
     }
+
 }
