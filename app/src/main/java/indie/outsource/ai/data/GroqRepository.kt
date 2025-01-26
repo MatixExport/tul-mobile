@@ -36,7 +36,6 @@ class GroqRepository @Inject constructor(
     }
 
     override suspend fun getCompletion(text: String,modelId: String): String {
-        println("Repository: got modelID as $modelId")
         val result = api.getCompletion(
             getTokenString(),
             GroqRequest(

@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
@@ -24,6 +26,10 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -33,8 +39,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -166,8 +175,6 @@ fun ItemList(items: List<ModelListModel>,onItemClick: (id:String,index:Int) -> U
     }
 }
 
-
-
 @Composable
 fun ListItemView(
     item: ModelListModel,
@@ -176,76 +183,120 @@ fun ListItemView(
     onLike: (id: String, index: Int) -> Unit = { _, _ -> },
     viewModel: ModelListViewModel = hiltViewModel()
 ) {
-
     val modelListUiState by viewModel.uiState.collectAsState()
 
-
-    Column(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(8.dp)
+            .clickable { onClick(item.model.name, index) }
             .border(
                 width = if (item.isSelected) 2.dp else 0.dp,
-                color = if (item.isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
+                color = if (item.isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
                 shape = MaterialTheme.shapes.medium
-            )
-            .clip(shape = MaterialTheme.shapes.medium)
-            .clickable { onClick(item.model.name, index) }
-            .padding(16.dp)
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = MaterialTheme.shapes.medium
     ) {
-        Text(
-            text = item.model.name,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = item.model.owner,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
-            Icon(
-                imageVector = if (item.wasUsed) Icons.Default.CheckCircle else Icons.Default.Warning,
-                contentDescription = if (item.wasUsed) "Used" else "Not Used",
-                tint = if (item.wasUsed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = if (item.wasUsed) "Used" else "Not Used",
-                fontSize = 14.sp,
-                color = if (item.wasUsed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                text = item.model.name,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
             )
-        }
+            Spacer(modifier = Modifier.height(4.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        val isLiked = isLikedByUser(item,modelListUiState.accountData.userId)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { onLike(item.model.name, index) }
-        ) {
-            Icon(
-                imageVector = if (isLiked) Icons.Default.ThumbUp else Icons.Outlined.ThumbUp,
-                contentDescription = if (isLiked) "Liked" else "Not Liked",
-                tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "${item.modelData.likedBy.size} Likes",
-                fontSize = 14.sp,
+                text = "by ${item.model.owner}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Type: ${item.model.type}",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Created: ${item.year}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = item.desc,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp, 4.dp, 4.dp, 0.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (item.wasUsed) Icons.Default.CheckCircle else Icons.Default.Warning,
+                        contentDescription = if (item.wasUsed) "Used" else "Not Used",
+                        tint = if (item.wasUsed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (item.wasUsed) "Used" else "Not Used",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (item.wasUsed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    )
+                }
+
+                val isLiked = isLikedByUser(item, modelListUiState.accountData.userId)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable(
+                            enabled = item.wasUsed,
+                            onClick = { onLike(item.model.name, index) }
+                        )
+                        .alpha(if (item.wasUsed) 1f else 0.5f)
+                ) {
+                    Icon(
+                        imageVector = if (isLiked) Icons.Default.ThumbUp else Icons.Outlined.ThumbUp,
+                        contentDescription = if (isLiked) "Liked" else "Not Liked",
+                        tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${item.modelData.likedBy.size} Likes",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
         }
     }
 }
+
+
 

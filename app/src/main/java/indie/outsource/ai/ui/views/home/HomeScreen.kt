@@ -2,6 +2,7 @@ package indie.outsource.ai.ui.views.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,10 +43,15 @@ import indie.outsource.ai.ui.MainViewModel
 import indie.outsource.ai.ui.views.conversationList.ConversationRow
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier,mainViewModel: MainViewModel,onConversationClick:(Conversation)->Unit = {}){
+fun HomeScreen(modifier: Modifier = Modifier,
+               mainViewModel: MainViewModel,
+               onConversationClick:(Conversation)->Unit = {},
+               onBrowseModelClick:()->Unit={}){
     HomeScreenItems(
         user=mainViewModel.user,
-        onConversationClick = onConversationClick
+        onConversationClick = onConversationClick,
+        onBrowseModelClick = onBrowseModelClick
+
     )
 }
 
@@ -53,7 +59,8 @@ fun HomeScreen(modifier: Modifier = Modifier,mainViewModel: MainViewModel,onConv
 fun HomeScreenItems(
     modifier: Modifier = Modifier,
     onConversationClick:(Conversation)->Unit = {},
-    user:FirebaseUser?
+    user:FirebaseUser?,
+    onBrowseModelClick:()->Unit={}
 ) {
 
     LazyColumn(
@@ -71,7 +78,9 @@ fun HomeScreenItems(
             WelcomeText()
         }
         item{
-            BrowseModelsBox()
+            BrowseModelsBox(
+                onBrowseModelClick = onBrowseModelClick
+            )
         }
 
         item{
@@ -148,10 +157,9 @@ fun WelcomeText(modifier: Modifier = Modifier){
 }
 
 @Composable
-fun BrowseModelsBox(){
+fun BrowseModelsBox(onBrowseModelClick:()->Unit={}){
     val image = painterResource(R.drawable.network_bg)
     Column{
-
         Box(
             modifier = Modifier
                 .clip(
@@ -159,6 +167,7 @@ fun BrowseModelsBox(){
                        56f
                     )
                 )
+                .clickable { onBrowseModelClick() }
                 .padding(0.dp,0.dp,0.dp,0.dp)
         ){
             Image(

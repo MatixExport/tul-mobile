@@ -76,6 +76,9 @@ fun NavComposable(modifier: Modifier = Modifier){
                         mainViewModel = viewModel,
                         onConversationClick = {conv:Conversation->
                             navController.navigate("${Routes.Inference.name}/load/${conv.documentId}")
+                        },
+                        onBrowseModelClick = {
+                            navController.navigate(Routes.ModelList.name)
                         }
                     )
                 }
