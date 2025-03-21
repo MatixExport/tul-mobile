@@ -146,7 +146,7 @@ fun WelcomeText(modifier: Modifier = Modifier){
                     )
                 )
             ) {
-                append(" indie outsource")
+                append(" Jakub Kubiś")
             }
         },
         style = MaterialTheme.typography.headlineSmall,

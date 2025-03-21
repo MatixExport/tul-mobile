@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import okhttp3.internal.toImmutableList
 import javax.inject.Inject
 
@@ -31,23 +32,35 @@ class InferenceViewModel @Inject constructor(
     val uiState: StateFlow<InferenceState> = _uiState.asStateFlow()
 
 
-    private fun completeText(text : String){
-        CoroutineScope(Dispatchers.Default).launch {
-            val msg : Message = Message("",isUserMessage = false)
-            try{
-                models.forEach { id:String->
-                    val response : String = repository.getCompletion(text,id)
-                    println(response);
-                    msg.responses.add(GroqMessage(id,response))
+
+
+    private fun completeText(text: String) {
+        val addMessageLock = Mutex()
+        val msg = Message("",isUserMessage = false);
+        var wasAdded : Boolean = false;
+        var msgIndex : Int = 0;
+        for (model in models) {
+            CoroutineScope(Dispatchers.Default).launch {
+                try{
+                    val response : String = repository.getCompletion(text,model);
+
+                    //First response before the message was even added
+                    addMessageLock.lock()
+                    if(!wasAdded){
+                        wasAdded = true;
+                        msgIndex = msg.responses.size + 1
+                        msg.responses.add(GroqMessage(model,response))
+                        addMessage(msg)
+                    }
+                    else{
+                        addResponseToMessage(msgIndex,GroqMessage(model,response))
+                    }
+                    addMessageLock.unlock()
+
                 }
-            }
-            catch (e : Exception){
-                println(e.message)
-            }
-            finally {
-                addMessage(
-                    msg
-                )
+                catch (e : Exception){
+                    println(e.message)
+                }
             }
         }
     }
@@ -138,6 +151,18 @@ class InferenceViewModel @Inject constructor(
                 println(e.message)
             }
         }
+    }
+
+    private fun addResponseToMessage(messageIndex: Int, newResponse: GroqMessage) {
+        _uiState.value = _uiState.value.copy(
+            messages = _uiState.value.messages.toMutableList().apply {
+                this[messageIndex] = this[messageIndex].copy(
+                    responses = this[messageIndex].responses.toMutableList().apply {
+                        add(newResponse)
+                    }
+                )
+            }
+        )
     }
 
     fun setMessageResponse(messageIndex:Int,responseIndex:Int){
