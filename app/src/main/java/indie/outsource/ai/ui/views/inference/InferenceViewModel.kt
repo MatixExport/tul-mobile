@@ -48,7 +48,7 @@ class InferenceViewModel @Inject constructor(
                     addMessageLock.lock()
                     if(!wasAdded){
                         wasAdded = true;
-                        msgIndex = msg.responses.size + 1
+                        msgIndex = uiState.value.messages.size
                         msg.responses.add(GroqMessage(model,response))
                         addMessage(msg)
                     }
